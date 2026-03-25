@@ -39,7 +39,7 @@ def perform_ocr():
         # Format response
         response_data = {
             'input_path': filename,
-            'results': results
+            'rec_texts': results
         }
         
         return jsonify(response_data)
