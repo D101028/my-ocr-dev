@@ -1,5 +1,6 @@
 import argparse
 import os
+import shutil
 import yaml
 
 if not os.path.isfile("settings.yaml"):
@@ -27,7 +28,14 @@ class Config:
     OCR_SERVER_API = config.get("OCR_SERVER_API")
     if OCR_SERVER_API is None:
         OCR_SERVER_API = "http://localhost:5000/ocr"
+    GTTS_DEFAULT_LANG = config.get("GTTS_DEFAULT_LANG")
+    if GTTS_DEFAULT_LANG is None:
+        GTTS_DEFAULT_LANG = "ja"
 
     LATEX_OCR_SERVER_API = config.get("LATEX_OCR_SERVER_API")
     if LATEX_OCR_SERVER_API is None:
         LATEX_OCR_SERVER_API = "http://localhost:5000/texify"
+
+    @classmethod
+    def delete_tmp_files(cls):
+        shutil.rmtree(cls.TMP_SAVING_PATH)

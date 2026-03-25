@@ -1,12 +1,14 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QPushButton, QPlainTextEdit, QScrollArea, 
-                             QApplication, QFrame, QStackedWidget)
+                             QApplication, QFrame, QStackedWidget, QComboBox)
 from PyQt6.QtCore import Qt, QRect, QPoint , QThread, pyqtSignal, QTimer, QSize
 from PyQt6.QtGui import QFont, QPixmap, QPainter, QColor, QPen, QMovie, QIcon
 from PIL import ImageGrab
 
 from config import Config, MODEL
 from src.api import ocr
+from src.sound import play_sound 
+from src.tex_compile import compile 
 
 # 截圖 widget
 class SnippingTool(QWidget):
@@ -96,7 +98,7 @@ class SnippingTool(QWidget):
 
 class OCRWorker(QThread):
     ocr_finished = pyqtSignal(str)
-    compile_finished = pyqtSignal(object)
+    compile_finished = pyqtSignal(str) # 改為傳回圖片路徑
     error_occurred = pyqtSignal(str)
 
     def __init__(self, img_path):
@@ -105,12 +107,22 @@ class OCRWorker(QThread):
 
     def run(self):
         try:
-            api = Config.LATEX_OCR_SERVER_API if MODEL == "latex" else Config.OCR_SERVER_API
-            out = ocr(self.img_path, api)
-            self.ocr_finished.emit(out)
+            # 1. 根據模式選擇 API
+            if MODEL == "latex":
+                api = Config.LATEX_OCR_SERVER_API
+            else:
+                api = Config.OCR_SERVER_API
             
-            raise Exception("Not Ready")
-            self.compile_finished.emit(result_img)
+            # 2. 執行辨識
+            text = ocr(self.img_path, api)
+            self.ocr_finished.emit(text)
+            
+            # 3. 根據模式執行後續動作
+            if MODEL == "latex" and text.strip():
+                # 執行 LaTeX 編譯
+                res_img_path = compile(text)
+                self.compile_finished.emit(res_img_path)
+            
         except Exception as e:
             self.error_occurred.emit(str(e))
 
@@ -118,8 +130,8 @@ class ResultWindow(QWidget):
     def __init__(self, img_path):
         super().__init__()
         self.img_path = img_path
-        self.setWindowTitle("Recognition Results")
-        self.resize(700, 600) # 稍微調高一點點
+        self.setWindowTitle(f"Recognition Results ({MODEL.upper()})")
+        self.resize(700, 500 if MODEL == "ocr" else 650) 
         self.init_ui()
         self.apply_styles()
         self.start_processing()
@@ -127,38 +139,86 @@ class ResultWindow(QWidget):
     def init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
-        layout.setSpacing(10)
+        layout.setSpacing(15)
 
-        # --- 1. 文本區堆疊 (關鍵修改) ---
+        # --- 1. 文本顯示區 (兩模式共有) ---
         self.text_stack = QStackedWidget()
         
-        # 頁面 0: 文字區的 Loading 狀態
+        # Loading 頁面
         self.text_loading_container = QWidget()
         text_loading_layout = QVBoxLayout(self.text_loading_container)
         self.text_loading_label = QLabel()
         self.text_loading_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         text_loading_layout.addWidget(self.text_loading_label)
         
-        # 頁面 1: 實際的文字框
+        # 編輯頁面
         self.text_edit = QPlainTextEdit()
         self.text_edit.setFont(QFont("JetBrains Mono", 12))
         
         self.text_stack.addWidget(self.text_loading_container) # Index 0
         self.text_stack.addWidget(self.text_edit)              # Index 1
+        layout.addWidget(self.text_stack, 1)
 
-        # --- 2. 功能列 ---
+        # --- 2. 功能按鈕列 (Copy) ---
         action_layout = QHBoxLayout()
-        self.copy_btn = QPushButton("Copy")
-        self.copy_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.copy_btn.clicked.connect(self.copy_to_clipboard)
-        self.copy_btn.setFixedHeight(40)
+        self.copy_btn = QPushButton(" Copy")
+        self.copy_btn.setFixedHeight(35)
         self.copy_btn.setMinimumWidth(100)
+        self.copy_btn.clicked.connect(self.copy_to_clipboard)
         
         action_layout.addStretch()
         action_layout.addWidget(self.copy_btn)
         action_layout.addStretch()
+        layout.addLayout(action_layout)
 
-        # --- 3. 預覽區 (圖片) ---
+        # --- 3. 底部動態分流區 ---
+        if MODEL == "ocr":
+            self.init_ocr_bottom(layout)
+        else:
+            self.init_latex_bottom(layout)
+
+        # Loading 動畫
+        self.loading_movie_text = QMovie(Config.LOADING_GIF)
+        self.loading_movie_text.setScaledSize(QSize(64, 64))
+
+    def init_ocr_bottom(self, parent_layout):
+        """OCR 模式：語言選單與語音播放"""
+        bottom_frame = QFrame()
+        bottom_frame.setObjectName("bottom_frame")
+        bottom_layout = QHBoxLayout(bottom_frame)
+        
+        # 語言下拉選單
+        self.lang_combo = QComboBox()
+        self.lang_map = {
+            "Japanese (ja)": "ja",
+            "English (en)": "en",
+            "Tr. Chinese (zh-TW)": "zh-TW",
+            "Si. Chinese (zh-CN)": "zh-CN"
+        }
+        self.code_lang_map = dict((value, key) for key, value in self.lang_map.items())
+        self.lang_combo.addItems(self.lang_map.keys())
+        self.lang_combo.setCurrentText(self.code_lang_map[Config.GTTS_DEFAULT_LANG])
+        self.lang_combo.setFixedHeight(35)
+        
+        # 播放鍵
+        self.play_btn = QPushButton(" ▶ Play Audio")
+        self.play_btn.setFixedHeight(35)
+        self.play_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.play_btn.clicked.connect(self.play_audio)
+        
+        bottom_layout.addStretch()
+        label = QLabel("Voice Lang:")
+        label.setObjectName("voiceLangLabel")
+        bottom_layout.addWidget(label)
+        bottom_layout.addWidget(self.lang_combo)
+        bottom_layout.addSpacing(10)
+        bottom_layout.addWidget(self.play_btn)
+        bottom_layout.addStretch()
+        
+        parent_layout.addWidget(bottom_frame)
+
+    def init_latex_bottom(self, parent_layout):
+        """Latex 模式：圖片編譯預覽"""
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -167,111 +227,100 @@ class ResultWindow(QWidget):
         self.display_label = QLabel()
         self.display_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.scroll_area.setWidget(self.display_label)
-
-        # 設定 Loading 動畫 (共用或獨立皆可)
-        self.loading_movie_text = QMovie(Config.LOADING_GIF)
+        
         self.loading_movie_img = QMovie(Config.LOADING_GIF)
-        self.loading_movie_text.setScaledSize(QSize(64, 64)) # 文字區的小一點
-        self.loading_movie_img.setScaledSize(QSize(96, 96))
-
-        # 組合總佈局
-        layout.addWidget(self.text_stack, 1) # 權重 1
-        layout.addLayout(action_layout)
-        layout.addSpacing(5)
-        layout.addWidget(self.scroll_area, 2) # 權重 2
+        self.loading_movie_img.setScaledSize(QSize(80, 80))
+        
+        parent_layout.addWidget(self.scroll_area, 2)
 
     def apply_styles(self):
         self.setStyleSheet("""
-            QWidget {
-                background-color: #2b2b2b;
-                color: #ffffff;
-            }
+            QWidget { background-color: #2b2b2b; color: #ffffff; }
             QPlainTextEdit {
-                border: 1px solid #555555;
-                border-radius: 8px;
-                background-color: #1e1e1e;
-                padding: 10px;
-                color: #ffffff;
+                border: 1px solid #555555; border-radius: 8px;
+                background-color: #1e1e1e; padding: 10px;
             }
-            /* Loading 容器的邊框，讓它看起來像文字框的佔位符 */
-            QWidget#text_loading_container {
-                border: 1px solid #444444;
-                border-radius: 8px;
+            #text_loading_container {
+                border: 1px solid #444444; border-radius: 8px;
                 background-color: #1e1e1e;
+            }
+            #bottom_frame {
+                background-color: #333333; border-radius: 8px; padding: 5px;
             }
             QPushButton {
-                background-color: #4a4a4a;
-                color: #ffffff;
-                border: none;
-                border-radius: 4px;
-                padding: 5px 15px;
+                background-color: #4a4a4a; border-radius: 4px; padding: 5px 15px;
                 font-weight: 500;
-                font-size: 15px;
             }
-            QPushButton:hover {
-                background-color: #666666;
+            QPushButton:hover { background-color: #666666; }
+            QComboBox {
+                background-color: #444444; border: 1px solid #555555;
+                border-radius: 4px; padding: 2px 10px; min-width: 120px;
             }
-            QScrollArea {
-                background-color: #2b2b2b;
-                border-top: 1px solid #555555;
-            }
+            QComboBox::drop-down { border: 0px; }
+            QScrollArea { border-top: 1px solid #555555; }
+            QLabel#voiceLangLabel { background-color: #333333 }
         """)
         self.text_loading_container.setObjectName("text_loading_container")
 
     def start_processing(self):
-        # 切換到 Loading 頁面並播放動畫
         self.text_stack.setCurrentIndex(0)
         self.text_loading_label.setMovie(self.loading_movie_text)
         self.loading_movie_text.start()
 
-        self.display_label.setMovie(self.loading_movie_img)
-        self.loading_movie_img.start()
+        if MODEL == "latex":
+            self.display_label.setMovie(self.loading_movie_img)
+            self.loading_movie_img.start()
         
-        # 初始化 Worker
         self.worker = OCRWorker(self.img_path)
-        self.worker.ocr_finished.connect(self.on_ocr_success) # 改用專門的 function 處理
-        self.worker.compile_finished.connect(self.on_compile_success)
+        self.worker.ocr_finished.connect(self.on_ocr_success)
+        if MODEL == "latex":
+            self.worker.compile_finished.connect(self.on_compile_success)
         self.worker.error_occurred.connect(self.on_error)
         self.worker.start()
 
     def on_ocr_success(self, text):
-        """當文字辨識完成時調用"""
         self.loading_movie_text.stop()
         self.text_edit.setPlainText(text)
-        self.text_stack.setCurrentIndex(1) # 切換回文字顯示頁面
+        self.text_stack.setCurrentIndex(1)
 
-    def on_compile_success(self, result):
-        self.loading_movie_img.stop()
-        pixmap = QPixmap(result) if isinstance(result, str) else result
-        self.display_label.setMovie(None)
-        self.display_label.setPixmap(pixmap)
+    def on_compile_success(self, img_path):
+        if MODEL == "latex":
+            self.loading_movie_img.stop()
+            pixmap = QPixmap(img_path)
+            self.display_label.setMovie(None)
+            self.display_label.setPixmap(pixmap)
+
+    def play_audio(self):
+        text = self.text_edit.toPlainText().strip()
+        if not text: return
+        
+        # 取得選擇的語言代碼
+        display_name = self.lang_combo.currentText()
+        lang_code = self.lang_map.get(display_name, "ja")
+        
+        # 執行語音播放
+        play_sound(text, lang=lang_code)
 
     def on_error(self, err):
         self.loading_movie_text.stop()
-        self.loading_movie_img.stop()
-        self.text_stack.setCurrentIndex(1) # 切換回文字框以顯示錯誤
-        # self.text_edit.setPlainText(f"⚠ Error: {err}")
-        self.display_label.setText(f"⚠ Error: {err}")
+        if MODEL == "latex": self.loading_movie_img.stop()
+        self.text_stack.setCurrentIndex(1)
+        self.text_edit.setPlainText(f"⚠ Error: {err}")
 
     def copy_to_clipboard(self):
         clipboard = QApplication.clipboard()
         if clipboard:
             clipboard.setText(self.text_edit.toPlainText())
-            self.copy_btn.setText("✓")
+            self.copy_btn.setText("✓ Copied")
             self.copy_btn.setEnabled(False)
-            def inner():
-                self.copy_btn.setText("Copy")
-                self.copy_btn.setEnabled(True)
-            QTimer.singleShot(1500, inner)
+            QTimer.singleShot(1500, lambda: (self.copy_btn.setText(" Copy"), self.copy_btn.setEnabled(True)))
 
     def keyPressEvent(self, event):
-        # 如果按下的是 Esc 鍵
         if event.key() == Qt.Key.Key_Escape:
-            self.close()  # 呼叫關閉視窗
+            self.close()
 
     def closeEvent(self, event):
-        # 如果 worker 還在執行，強制終止它
         if hasattr(self, 'worker') and self.worker.isRunning():
-            self.worker.terminate() # 強制停止執行緒
-            self.worker.wait()      # 等待執行緒完全清理退出
-        event.accept()             # 接受關閉事件
+            self.worker.terminate()
+            self.worker.wait()
+        event.accept()

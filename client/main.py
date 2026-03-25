@@ -1,6 +1,7 @@
 import sys
 from PyQt6.QtWidgets import QApplication
 
+from config import Config
 from src.widgets import SnippingTool, ResultWindow
 
 def main():
@@ -23,7 +24,11 @@ def main():
     snipper.img_captured.connect(handle_snip_finished)
 
     snipper.show()
-    sys.exit(app.exec())
+
+    exit_code = app.exec()
+    
+    Config.delete_tmp_files()
+    sys.exit(exit_code)
 
 if __name__ == "__main__":
     main()
