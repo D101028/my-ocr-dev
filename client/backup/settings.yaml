@@ -1,4 +1,0 @@
-DEBUG: false
-
-# A folder for saving intermediate files temperory (default: ./out)
-TMP_SAVING_PATH: null
