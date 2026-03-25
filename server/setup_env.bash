@@ -54,6 +54,30 @@ python3 -m pip install -r requirements.txt || {
 # Download model weights
 log_info "Downloading model weights..."
 python3 -c "import paddleocr; paddleocr.PaddleOCR()" || log_warn "PaddleOCR initialization failed"
-python3 -c "import texify" || log_warn "texify import failed"
+python3 -c "import texify; from texify.model.model import load_model; from texify.model.processor import load_processor; model = load_model(); processor = load_processor()" || {
+    log_warn "texify import failed, attempting to fix transformers configuration..."
+    python3 << 'EOF'
+import os
+config_file = os.path.join(".venv/lib/python3.12/site-packages/transformers/configuration_utils.py")
+if os.path.exists(config_file):
+    with open(config_file, 'r') as f:
+        content = f.read()
+    
+    # Check if fix is needed and apply it
+    if 'def recursive_diff_dict' in content:
+        fixed_content = content.replace(
+            'elif key not in dict_b or value != dict_b[key]:',
+            'elif key not in dict_b or (value != default.get(key, value)):'
+        )
+        with open(config_file, 'w') as f:
+            f.write(fixed_content)
+        print("Fixed recursive_diff_dict function")
+EOF
+    log_warn "retrying loading texify again..."
+    python3 -c "import texify; from texify.model.model import load_model; from texify.model.processor import load_processor; model = load_model(); processor = load_processor()" || {
+        log_error "texify import failed, exitting with error"
+        exit 1
+    }
+}
 
 log_info "Setup completed successfully!"
