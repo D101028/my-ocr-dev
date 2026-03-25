@@ -5,8 +5,8 @@ from PyQt6.QtCore import Qt, QRect, QPoint , QThread, pyqtSignal, QTimer, QSize
 from PyQt6.QtGui import QFont, QPixmap, QPainter, QColor, QPen, QMovie, QIcon
 from PIL import ImageGrab
 
-from config import Config
-from src.api import *
+from config import Config, MODEL
+from src.api import ocr
 
 # 截圖 widget
 class SnippingTool(QWidget):
@@ -105,10 +105,11 @@ class OCRWorker(QThread):
 
     def run(self):
         try:
-            tex_code = latex_ocr(self.img_path)
-            self.ocr_finished.emit(tex_code)
+            api = Config.LATEX_OCR_SERVER_API if MODEL == "latex" else Config.OCR_SERVER_API
+            out = ocr(self.img_path, api)
+            self.ocr_finished.emit(out)
             
-            result_img = compile_tex(tex_code)
+            raise Exception("Not Ready")
             self.compile_finished.emit(result_img)
         except Exception as e:
             self.error_occurred.emit(str(e))

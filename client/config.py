@@ -1,3 +1,4 @@
+import argparse
 import os
 import yaml
 
@@ -5,6 +6,12 @@ if not os.path.isfile("settings.yaml"):
     raise Exception("settings.yaml not found")
 with open("settings.yaml", mode = "r", encoding="utf-8") as fp:
     config = yaml.load(fp, Loader=yaml.FullLoader)
+
+parser = argparse.ArgumentParser(description="A desktop ocr client.")
+# parser.add_argument("-h", "--help", action="help", help="show this help message and exit")
+parser.add_argument("-m", "--model", type=str, default="ocr", choices=["ocr", "latex"], help="choose the mode (model) to use")
+args = parser.parse_args()
+MODEL = args.model
 
 class Config:
     TMP_SAVING_PATH = config.get("TMP_SAVING_PATH")
@@ -16,3 +23,11 @@ class Config:
     LOADING_GIF = "./loading.gif"
     if not os.path.isfile(LOADING_GIF):
         raise Exception("loading.gif not found")
+
+    OCR_SERVER_API = config.get("OCR_SERVER_API")
+    if OCR_SERVER_API is None:
+        OCR_SERVER_API = "http://localhost:5000/ocr"
+
+    LATEX_OCR_SERVER_API = config.get("LATEX_OCR_SERVER_API")
+    if LATEX_OCR_SERVER_API is None:
+        LATEX_OCR_SERVER_API = "http://localhost:5000/texify"

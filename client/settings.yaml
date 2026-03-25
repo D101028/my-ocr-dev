@@ -2,3 +2,12 @@ DEBUG: false
 
 # A folder for saving intermediate files temperory (default: ./out)
 TMP_SAVING_PATH: null
+
+# Standard OCR server config
+# OCR_SERVER_API: the host of ocr server (default: http://localhost:5000/ocr)
+OCR_SERVER_API: http://172.27.110.35:11451/ocr
+
+# LaTeX OCR server config
+# LATEX_OCR_SERVER_API: the host of latex ocr server (default: http://localhost:5000/texify)
+LATEX_OCR_SERVER_API: http://172.27.110.35:11451/texify
+
