@@ -1,0 +1,39 @@
+# Fdb version 4
+["xdvipdfmx"] 1773675029.08847 "test.xdv" "test.pdf" "test" 1773675029.41492 0
+  "test.xdv" 1773675028 404 7d4127b7947e7a0751c9361c27372570 "xelatex"
+  (generated)
+  "test.pdf"
+  (rewritten before read)
+["xelatex"] 1773675028.17917 "d:/Projects/LaTeX-OCR-Desktop/test-files/test.tex" "test.xdv" "test" 1773675029.41273 0
+  "C:/Users/User/AppData/Local/MiKTeX/miktex/data/le/xetex/xelatex.fmt" 1756803459 27012388 4f939bf505a30e6d41fc5822b50d8551 ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/tfm/public/cm/cmr10.tfm" 1136765053 1296 45809c5a464d5f32c8f98ba97c1bb47f ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/amsfonts/amsfonts.sty" 1358197772 5949 3f3fd50a8cc94c3d4cbf4fc66cd3df1c ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/amsfonts/amssymb.sty" 1358197772 13829 94730e64147574077f8ecfea9bb69af4 ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/amsmath/amsbsy.sty" 1750428994 2222 27db7d52163edae53881b71ff62e754e ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/amsmath/amsgen.sty" 1750428993 4173 1b3e76addfb8afcb47db4811d66e1dc6 ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/amsmath/amsmath.sty" 1750428995 88401 0c3d1897569ad77cb9d8fb25b0bdf668 ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/amsmath/amsopn.sty" 1750428994 4474 c510a88aa5f51b8c773b50a7ee92befd ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/amsmath/amstext.sty" 1750428995 2444 9983e1d0683f102e3b190c64a49313aa ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/base/article.cls" 1749467999 20144 b966087dda3b194755eb460d32e2ef75 ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/base/fontenc.sty" 1749467999 5275 2f50a1b91fdc3c2c6ff41843a6854061 ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/base/size12.clo" 1749467999 8449 8dc66c6c313c8eb2d774af83bca435dd ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/cjk/CJKfntef.sty" 1670582841 12851 25a9b5cc006609feb5c9a20ce24a5392 ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/ctex/ctexhook.sty" 1657818410 6505 33157acfddefdd8fd513e2308e07a435 ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/fontspec/fontspec-xetex.sty" 1715414856 164981 148a15871e0e3c3101b8203733535af2 ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/fontspec/fontspec.cfg" 1715414856 549 c4adac819276241fea8eb79c5ab7b99e ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/fontspec/fontspec.sty" 1715414856 3755 4872b99d810c024f9c09bb1c62ffee3b ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/l3backend/l3backend-xetex.def" 1751005717 32544 8ab730024c05d74f83bc9b31c146019c ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/l3kernel/expl3.sty" 1755079871 6558 773e78b2bed3fca0525bb56baa46bce5 ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/l3packages/xparse/xparse.sty" 1724854269 9783 ab4bee47700c04aadedb8da27591b0ab ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/latex/l3packages/xtemplate/xtemplate.sty" 1724854269 1308 87acdbdf1ed70c3b07e2090f15bd3635 ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/xelatex/xecjk/xeCJK.cfg" 1659726270 408 7369c27beaa819c5f46de3795b22ee3e ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/xelatex/xecjk/xeCJK.sty" 1659726270 183137 ed372550124703b2b73cbcc0b47cb20f ""
+  "C:/Users/User/AppData/Local/Programs/MiKTeX/tex/xelatex/xecjk/xeCJKfntef.sty" 1659726270 39577 b470f8a1dbecc9c45c9bf05ca7db9188 ""
+  "d:/Projects/LaTeX-OCR-Desktop/test-files/test.tex" 1773675026 222 895c45e792b56ea2918b7a3cfc689aae ""
+  "test.aux" 1773675028 32 3985256e7290058c681f74d7a3565a19 "xelatex"
+  "test.tex" 1773675026 222 895c45e792b56ea2918b7a3cfc689aae ""
+  (generated)
+  "test.aux"
+  "test.log"
+  "test.xdv"
+  (rewritten before read)
