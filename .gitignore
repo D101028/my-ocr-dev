@@ -1,4 +1,5 @@
 temp_*
+client/out
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
