@@ -1,4 +1,6 @@
 import configparser
+import os
+import shutil
 
 config = configparser.ConfigParser()
 
@@ -11,11 +13,14 @@ texify_section = config["TEXIFY"]
 class Config:
     HOST: str
     PORT: int
+    TEMP_DIR: str
+    WORKING_DIR: str
     PADDLE_OCR_ROUTE: str
     TEXIFY_ROUTE: str
 
     _HOST = default_section.get("HOST")
     _PORT = default_section.get("PORT")
+    _TEMP_DIR = default_section.get("TEMP_DIR")
 
     if not _HOST:
         HOST = "localhost"
@@ -25,6 +30,15 @@ class Config:
         PORT = 5000
     else:
         PORT = int(_PORT)
+    if not _TEMP_DIR:
+        TEMP_DIR = "./temp_dir"
+    else:
+        TEMP_DIR = _TEMP_DIR
+    if not os.path.isdir(TEMP_DIR):
+        os.mkdir(TEMP_DIR)
+    WORKING_DIR = os.path.join(TEMP_DIR, os.urandom(8).hex())
+    if not os.path.isdir(WORKING_DIR):
+        os.mkdir(WORKING_DIR)
 
     _PADDLE_OCR_ROUTE = paddle_ocr_section.get("PADDLE_OCR_ROUTE")
 
@@ -40,3 +54,6 @@ class Config:
     else:
         TEXIFY_ROUTE = _TEXIFY_ROUTE
 
+    @classmethod
+    def delete_tmp_files(cls):
+        shutil.rmtree(cls.WORKING_DIR)

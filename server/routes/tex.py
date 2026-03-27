@@ -1,3 +1,5 @@
+import os
+
 from flask import Blueprint, request, jsonify
 from texify.inference import batch_inference
 from texify.model.model import load_model
@@ -24,8 +26,8 @@ def perform_ocr():
             file = request.files['file']
             if file.filename == '':
                 return jsonify({'error': 'No selected file'}), 400
-            file.save('temp_image.png')
-            filename = 'temp_image.png'
+            filename = os.path.join(Config.WORKING_DIR, f'{os.urandom(8).hex()}.png')
+            file.save(filename)
         elif 'path' in request.json:
             # Handle file path
             filename = request.json['path']
