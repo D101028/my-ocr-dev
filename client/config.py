@@ -17,9 +17,12 @@ MODEL = args.model
 class Config:
     TMP_SAVING_PATH = config.get("TMP_SAVING_PATH")
     if TMP_SAVING_PATH is None:
-        TMP_SAVING_PATH = "./out"
+        TMP_SAVING_PATH = f"./out"
     if not os.path.isdir(TMP_SAVING_PATH):
         os.mkdir(TMP_SAVING_PATH)
+    WORKING_DIR = os.path.join(TMP_SAVING_PATH, os.urandom(8).hex())
+    if not os.path.isdir(WORKING_DIR):
+        os.mkdir(WORKING_DIR)
 
     LOADING_GIF = "./loading.gif"
     if not os.path.isfile(LOADING_GIF):
@@ -38,4 +41,4 @@ class Config:
 
     @classmethod
     def delete_tmp_files(cls):
-        shutil.rmtree(cls.TMP_SAVING_PATH)
+        shutil.rmtree(cls.WORKING_DIR)

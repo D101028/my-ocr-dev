@@ -12,7 +12,7 @@ def ocr(img_path: str, api: str = Config.OCR_SERVER_API) -> str:
             result = resp.json()
             print(f"\n✓ OCR completed for: {img_path}")
             print(f"Recognized texts: {result['rec_texts']}")
-            return "\n".join(result['rec_texts'])
+            return ("\n".join(result['rec_texts']).strip())
         else:
             print(f"✗ OCR failed with status {resp.status_code}: {resp.text}")
             return ""

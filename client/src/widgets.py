@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QPushButton, QPlainTextEdit, QScrollArea, 
                              QApplication, QFrame, QStackedWidget, QComboBox)
 from PyQt6.QtCore import Qt, QRect, QPoint , QThread, pyqtSignal, QTimer, QSize
-from PyQt6.QtGui import QFont, QPixmap, QPainter, QColor, QPen, QMovie, QIcon
+from PyQt6.QtGui import QFont, QPixmap, QPainter, QColor, QPen, QMovie
 from PIL import ImageGrab
 
 from config import Config, MODEL
@@ -25,7 +25,7 @@ class SnippingTool(QWidget):
         self.setWindowOpacity(0.3) 
         self.setCursor(Qt.CursorShape.CrossCursor) # 十字游標
         
-        self.tmp_img_path = f"{Config.TMP_SAVING_PATH}/snip_output.png"
+        self.tmp_img_path = f"{Config.WORKING_DIR}/snip_output.png"
         self.start_point = QPoint()
         self.end_point = QPoint()
         self.is_selecting = False
