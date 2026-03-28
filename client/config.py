@@ -2,6 +2,7 @@ import argparse
 import os
 import shutil
 import yaml
+from typing import Literal
 
 if not os.path.isfile("settings.yaml"):
     raise Exception("settings.yaml not found")
@@ -12,7 +13,7 @@ parser = argparse.ArgumentParser(description="A desktop ocr client.")
 # parser.add_argument("-h", "--help", action="help", help="show this help message and exit")
 parser.add_argument("-m", "--model", type=str, default="ocr", choices=["ocr", "latex"], help="choose the mode (model) to use")
 args = parser.parse_args()
-MODEL = args.model
+MODEL: Literal["ocr", "latex"] = args.model
 
 class Config:
     TMP_SAVING_PATH = config.get("TMP_SAVING_PATH")

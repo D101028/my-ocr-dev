@@ -8,7 +8,7 @@ from PIL import ImageGrab
 from config import Config, MODEL
 from src.api import ocr
 from src.sound import play_sound 
-from src.tex_compile import compile 
+from src.tex_compile import compile_to_png 
 
 # 截圖 widget
 class SnippingTool(QWidget):
@@ -101,6 +101,8 @@ class OCRWorker(QThread):
     compile_finished = pyqtSignal(str) # 改為傳回圖片路徑
     error_occurred = pyqtSignal(str)
 
+    compile_error_occurred = pyqtSignal(str)
+
     def __init__(self, img_path):
         super().__init__()
         self.img_path = img_path
@@ -120,9 +122,11 @@ class OCRWorker(QThread):
             # 3. 根據模式執行後續動作
             if MODEL == "latex" and text.strip():
                 # 執行 LaTeX 編譯
-                res_img_path = compile(text)
-                self.compile_finished.emit(res_img_path)
-            
+                try:
+                    res_img_path = compile_to_png(text)
+                    self.compile_finished.emit(res_img_path)
+                except Exception as e:
+                    self.compile_error_occurred.emit(str(e))
         except Exception as e:
             self.error_occurred.emit(str(e))
 
@@ -275,6 +279,7 @@ class ResultWindow(QWidget):
         self.worker.ocr_finished.connect(self.on_ocr_success)
         if MODEL == "latex":
             self.worker.compile_finished.connect(self.on_compile_success)
+            self.worker.compile_error_occurred.connect(self.on_error_compile)
         self.worker.error_occurred.connect(self.on_error)
         self.worker.start()
 
@@ -306,6 +311,13 @@ class ResultWindow(QWidget):
         if MODEL == "latex": self.loading_movie_img.stop()
         self.text_stack.setCurrentIndex(1)
         self.text_edit.setPlainText(f"⚠ Error: {err}")
+    
+    def on_error_compile(self, err):
+        self.loading_movie_text.stop()
+        if MODEL == "latex": self.loading_movie_img.stop()
+        error_widget = QPlainTextEdit()
+        error_widget.setPlainText(err)
+        self.scroll_area.setWidget(error_widget)
 
     def copy_to_clipboard(self):
         clipboard = QApplication.clipboard()
