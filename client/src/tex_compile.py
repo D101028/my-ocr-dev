@@ -141,7 +141,19 @@ def create_img(macro: str, save_dir: str) -> str:
         background = (255,255,255)
     )
     img = ImageEnhance.Contrast(Image.open(fp).convert("L")).enhance(4.0)
-    crop_img_obj(img, (255,255,255)).convert("L").save(fp)
+    img = crop_img_obj(img, (255,255,255)).convert("L")
+    # Add 5px margin
+    bg = Image.new("L", (img.width + 10, img.height + 10), 255)
+    bg.paste(img, (5, 5))
+    img = bg
+    
+    # Resize if width >= 600
+    if img.width >= 600:
+        ratio = 600 / img.width
+        new_size = (600, int(img.height * ratio))
+        img = img.resize(new_size, Image.Resampling.LANCZOS)
+    
+    img.save(fp)
     return fp
 
 def compile_to_png(raw_tex_code: str) -> str:
