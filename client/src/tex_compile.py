@@ -26,8 +26,6 @@ def latex_symbol_to_png(
     using xelatex or lualatex.
     Returns: (png_path, width_px, height_px)
     """
-    raise Exception("Test Error")
-
     assert compiler in ("xelatex", "lualatex"), "compiler must be xelatex or lualatex"
 
     tmpdir = Path(Config.WORKING_DIR)
