@@ -26,6 +26,4 @@ if __name__ == '__main__':
         serve(app, host=Config.HOST, port=Config.PORT)
     except Exception as e:
         logging.error(e)
-    finally:
-        Config.delete_tmp_files()
 

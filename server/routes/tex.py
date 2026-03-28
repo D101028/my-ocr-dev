@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from flask import Blueprint, request, jsonify
 from texify.inference import batch_inference
@@ -20,13 +21,16 @@ def perform_ocr():
     Texify endpoint that accepts image file or image path
     Converts mathematical expressions and formulas in images to LaTeX
     """
+    TEMP_WORKING_DIR = os.path.join(Config.TEMP_DIR, os.urandom(8).hex())
+    if not os.path.isdir(TEMP_WORKING_DIR):
+        os.mkdir(TEMP_WORKING_DIR)
     try:
         if 'file' in request.files:
             # Handle file upload
             file = request.files['file']
             if file.filename == '':
                 return jsonify({'error': 'No selected file'}), 400
-            filename = os.path.join(Config.WORKING_DIR, f'{os.urandom(8).hex()}.png')
+            filename = os.path.join(TEMP_WORKING_DIR, f'{os.urandom(8).hex()}.png')
             file.save(filename)
         elif 'path' in request.json:
             # Handle file path
@@ -49,3 +53,5 @@ def perform_ocr():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+    finally:
+        shutil.rmtree(TEMP_WORKING_DIR)
