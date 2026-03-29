@@ -127,43 +127,6 @@ def latex_symbol_to_png(
 
     return pix.width, pix.height
 
-    # --- Step 4: convert PDF → PNG with white background ---
-    with fitz.open(cropped_pdf_path) as pdf:
-        page = pdf[0]
-
-        zoom = dpi / 72.0
-        mat = fitz.Matrix(zoom, zoom)
-        pix = page.get_pixmap(matrix=mat, alpha=True)
-
-        if background is None:
-            if gray_level:
-                # Convert pixmap to grayscale while keeping alpha
-                # pix.samples: RGBA; shape: (h*w*4)
-
-                # Convert pixmap → PIL image
-                img = Image.frombytes("RGBA", (pix.width, pix.height), pix.samples)
-
-                # Split channels
-                r, g, b, a = img.split()
-
-                # Convert RGB → grayscale (luminosity)
-                gray = Image.merge("RGB", (r, g, b)).convert("L")
-
-                # Recombine gray + original alpha
-                final_img = Image.merge("LA", (gray, a))
-                final_img.save(out_path)
-            else:
-                pix.save(out_path)
-        else:
-            img = Image.frombytes("RGBA", (pix.width, pix.height), pix.samples)
-            if gray_level:
-                img = img.convert("LA")
-            bg = Image.new("RGB", img.size, background)
-            bg.paste(img, mask=img.split()[-1])  # use alpha channel as mask
-            bg.save(out_path, format="PNG")
-
-    return pix.width, pix.height
-
 def crop_img_obj(img: Image.Image, bg_color: tuple[int, int, int] | None = (255, 255, 255)):
     # Use alpha if requested/available
     if bg_color is None and (img.mode in ("RGBA", "LA") or ("transparency" in img.info)):
