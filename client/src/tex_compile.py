@@ -1,9 +1,8 @@
 import os
 import subprocess
-import tempfile
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageChops
 
 from config import Config
 
@@ -11,7 +10,6 @@ try:
     import fitz  # PyMuPDF
 except:
     pass 
-from PIL import Image, ImageEnhance, ImageChops
 
 def latex_symbol_to_png(
     macro,

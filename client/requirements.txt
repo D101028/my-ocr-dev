@@ -6,6 +6,7 @@ gTTS==2.5.4
 idna==3.11
 pillow==12.1.1
 playsound==1.2.2
+PyMuPDF==1.27.2.2
 PyQt6==6.10.2
 PyQt6-Qt6==6.10.2
 PyQt6_sip==13.11.1
