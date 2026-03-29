@@ -1,5 +1,6 @@
 import os
 import subprocess
+import time
 from pathlib import Path
 
 from PIL import Image, ImageEnhance, ImageChops
@@ -17,7 +18,8 @@ def latex_symbol_to_png(
     dpi=300,
     out_path="symbol.png", 
     background=None, 
-    gray_level=True
+    gray_level=True,
+    thread=None
 ):
     """
     Convert a LaTeX math symbol macro like '\\alpha' into a PNG image
@@ -47,34 +49,83 @@ def latex_symbol_to_png(
     tex_path.write_text(tex_content)
 
     # --- Step 2: Compile to PDF ---
-    p = subprocess.run(
+    p = subprocess.Popen(
         [
             compiler,
             "-interaction=nonstopmode",
             tex_name
         ],
         cwd=tmpdir,
-        check=False,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         creationflags=subprocess.CREATE_NO_WINDOW
     )
+    while p.poll() is None:
+        if thread and thread.isInterruptionRequested():
+            p.terminate()
+            p.wait()
+            raise Exception("Compilation interrupted")
+        time.sleep(0.1)
     if p.returncode:
-        print("-"*10, f"stdout: {p.stdout}", "-"*10, f"stderr: {p.stderr}", "-"*10, sep='\n')
-        raise Exception("\n".join(("-"*10, f"stdout: {p.stdout}", "-"*10, f"stderr: {p.stderr}", "-"*10)))
+        stdout = p.stdout.read().decode() if p.stdout else ""
+        stderr = p.stderr.read().decode() if p.stderr else ""
+        raise Exception(f"Compilation failed: stdout={stdout}, stderr={stderr}")
 
     # --- Step 3: Crop PDF to bounding box ---
-    p = subprocess.run(
+    p_crop = subprocess.Popen(
         ["pdfcrop", pdf_name, cropped_pdf_name],
         cwd=tmpdir,
-        check=False,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         creationflags=subprocess.CREATE_NO_WINDOW
     )
-    if p.returncode:
-        print("-"*10, f"stdout: {p.stdout}", "-"*10, f"stderr: {p.stderr}", "-"*10, sep='\n')
-        raise Exception("\n".join(("-"*10, f"stdout: {p.stdout}", "-"*10, f"stderr: {p.stderr}", "-"*10)))
+    while p_crop.poll() is None:
+        if thread and thread.isInterruptionRequested():
+            p_crop.terminate()
+            p_crop.wait()
+            raise Exception("PDF cropping interrupted")
+        time.sleep(0.1)
+    if p_crop.returncode:
+        stdout = p_crop.stdout.read().decode() if p_crop.stdout else ""
+        stderr = p_crop.stderr.read().decode() if p_crop.stderr else ""
+        raise Exception(f"PDF cropping failed: stdout={stdout}, stderr={stderr}")
+
+    # --- Step 4: convert PDF → PNG with white background ---
+    with fitz.open(cropped_pdf_path) as pdf:
+        page = pdf[0]
+
+        zoom = dpi / 72.0
+        mat = fitz.Matrix(zoom, zoom)
+        pix = page.get_pixmap(matrix=mat, alpha=True)
+
+        if background is None:
+            if gray_level:
+                # Convert pixmap to grayscale while keeping alpha
+                # pix.samples: RGBA; shape: (h*w*4)
+
+                # Convert pixmap → PIL image
+                img = Image.frombytes("RGBA", (pix.width, pix.height), pix.samples)
+
+                # Split channels
+                r, g, b, a = img.split()
+
+                # Convert RGB → grayscale (luminosity)
+                gray = Image.merge("RGB", (r, g, b)).convert("L")
+
+                # Recombine gray + original alpha
+                final_img = Image.merge("LA", (gray, a))
+                final_img.save(out_path)
+            else:
+                pix.save(out_path)
+        else:
+            img = Image.frombytes("RGBA", (pix.width, pix.height), pix.samples)
+            if gray_level:
+                img = img.convert("LA")
+            bg = Image.new("RGB", img.size, background)
+            bg.paste(img, mask=img.split()[-1])  # use alpha channel as mask
+            bg.save(out_path, format="PNG")
+
+    return pix.width, pix.height
 
     # --- Step 4: convert PDF → PNG with white background ---
     with fitz.open(cropped_pdf_path) as pdf:
@@ -130,13 +181,14 @@ def crop_img_obj(img: Image.Image, bg_color: tuple[int, int, int] | None = (255,
         bbox = diff.getbbox()
         return img.crop(bbox) if bbox else img
 
-def create_img(macro: str, save_dir: str) -> str:
+def create_img(macro: str, save_dir: str, thread=None) -> str:
     name = os.urandom(8).hex() + ".png"
     fp = f"{save_dir}/{name}"
     latex_symbol_to_png(
         macro, 
         out_path = fp, 
-        background = (255,255,255)
+        background = (255,255,255),
+        thread=thread
     )
     img = ImageEnhance.Contrast(Image.open(fp).convert("L")).enhance(4.0)
     img = crop_img_obj(img, (255,255,255)).convert("L")
@@ -154,7 +206,7 @@ def create_img(macro: str, save_dir: str) -> str:
     img.save(fp)
     return fp
 
-def compile_to_png(raw_tex_code: str) -> str:
-    fp = create_img(raw_tex_code, Config.WORKING_DIR)
+def compile_to_png(raw_tex_code: str, thread=None) -> str:
+    fp = create_img(raw_tex_code, Config.WORKING_DIR, thread=thread)
     return fp
 

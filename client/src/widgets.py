@@ -98,9 +98,8 @@ class SnippingTool(QWidget):
 
 class OCRWorker(QThread):
     ocr_finished = pyqtSignal(str)
-    compile_finished = pyqtSignal(str) # 改為傳回圖片路徑
+    compile_finished = pyqtSignal(str)
     error_occurred = pyqtSignal(str)
-
     compile_error_occurred = pyqtSignal(str)
 
     def __init__(self, img_path):
@@ -109,21 +108,17 @@ class OCRWorker(QThread):
 
     def run(self):
         try:
-            # 1. 根據模式選擇 API
             if MODEL == "latex":
                 api = Config.LATEX_OCR_SERVER_API
             else:
                 api = Config.OCR_SERVER_API
             
-            # 2. 執行辨識
             text = ocr(self.img_path, api)
             self.ocr_finished.emit(text)
             
-            # 3. 根據模式執行後續動作
             if MODEL == "latex" and text.strip():
-                # 執行 LaTeX 編譯
                 try:
-                    res_img_path = compile_to_png(text)
+                    res_img_path = compile_to_png(text, thread=self)
                     self.compile_finished.emit(res_img_path)
                 except Exception as e:
                     self.compile_error_occurred.emit(str(e))
@@ -333,6 +328,6 @@ class ResultWindow(QWidget):
 
     def closeEvent(self, event):
         if hasattr(self, 'worker') and self.worker.isRunning():
-            self.worker.terminate()
+            self.worker.requestInterruption()
             self.worker.wait()
         event.accept()
