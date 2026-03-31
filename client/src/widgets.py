@@ -327,7 +327,7 @@ class ResultWindow(QWidget):
             self.close()
 
     def closeEvent(self, event):
+        event.accept()
         if hasattr(self, 'worker') and self.worker.isRunning():
             self.worker.requestInterruption()
             self.worker.wait()
-        event.accept()
