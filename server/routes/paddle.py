@@ -1,4 +1,5 @@
 import os
+import shutil
 os.environ['PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK'] = 'True'
 
 from flask import Blueprint, request, jsonify
@@ -20,14 +21,15 @@ def perform_ocr():
     """
     OCR endpoint that accepts image file or image path
     """
+    TEMP_WORKING_DIR = os.path.join(Config.TEMP_DIR, os.urandom(8).hex())
     try:
         if 'file' in request.files:
             # Handle file upload
             file = request.files['file']
             if file.filename == '':
                 return jsonify({'error': 'No selected file'}), 400
-            file.save('temp_image.png')
-            filename = 'temp_image.png'
+            filename = os.path.join(TEMP_WORKING_DIR, f'{os.urandom(8).hex()}.png')
+            file.save(filename)
         elif 'path' in request.json:
             # Handle file path
             filename = request.json['path']
@@ -54,4 +56,7 @@ def perform_ocr():
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+    finally:
+        shutil.rmtree(TEMP_WORKING_DIR)
 
