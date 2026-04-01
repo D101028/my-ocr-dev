@@ -73,13 +73,15 @@ class SnippingTool(QWidget):
         # 取得最終矩形座標
         rect = QRect(self.start_point, self.end_point).normalized()
         
+        ratio = self.devicePixelRatioF()
+
         # 轉換為 Pillow 需要的元組 (left, top, right, bottom)
         # 注意：在高解析度螢幕 (DPI Scaling) 下，可能需要處理縮放倍率
         bbox = (
-            rect.left(),
-            rect.top(),
-            rect.right(),
-            rect.bottom()
+            int(rect.left() * ratio),
+            int(rect.top() * ratio),
+            int(rect.right() * ratio),
+            int(rect.bottom() * ratio)
         )
 
         if rect.width() > 5 and rect.height() > 5:
