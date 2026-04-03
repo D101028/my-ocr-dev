@@ -22,6 +22,8 @@ def perform_ocr():
     OCR endpoint that accepts image file or image path
     """
     TEMP_WORKING_DIR = os.path.join(Config.TEMP_DIR, os.urandom(8).hex())
+    if not os.path.isdir(TEMP_WORKING_DIR):
+        os.mkdir(TEMP_WORKING_DIR)
     try:
         if 'file' in request.files:
             # Handle file upload
