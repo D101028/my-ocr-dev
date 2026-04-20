@@ -1,6 +1,6 @@
 temp_*
 client/out/
-client/.katex-dir/
+client/.katex-env/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
