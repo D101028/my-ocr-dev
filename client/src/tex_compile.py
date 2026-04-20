@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 import time
 from pathlib import Path
@@ -11,6 +12,52 @@ try:
     import fitz  # PyMuPDF
 except:
     pass 
+
+def md_to_latex(text: str) -> str:
+    # 用於暫存不需要轉換的內容 (Escape 區域)
+    placeholders = []
+
+    def protect(match):
+        placeholders.append(match.group(0))
+        return f"%%PLACEHOLDER_{len(placeholders)-1}%%"
+
+    # --- 1. 保護 Escape 區域 ($$, $, {}) ---
+    # 注意：順序很重要，先處理最長的標記 ($$ 優先於 $)
+    # $$ ... $$ (支援多行)
+    text = re.sub(r'\$\$.*?\$\$', protect, text, flags=re.DOTALL)
+    # $ ... $
+    text = re.sub(r'\$.*?\$', protect, text)
+    # { ... }
+    text = re.sub(r'\{.*?\}', protect, text)
+
+    # --- 2. 處理標題 (# ## ###) ---
+    def replace_header(match):
+        level = len(match.group(1))
+        content = match.group(2).strip()
+        if level == 1: return f"\\section{{{content}}}"
+        elif level == 2: return f"\\subsection{{{content}}}"
+        elif level == 3: return f"\\subsubsection{{{content}}}"
+        else: return f"\\paragraph{{{content}}}"
+
+    # 只匹配行首的 #
+    lines = text.split('\n')
+    for i, line in enumerate(lines):
+        lines[i] = re.sub(r'^(#+)\s+(.*)', replace_header, line)
+    text = '\n'.join(lines)
+
+    # --- 3. 處理字體樣式 (*, **, _) ---
+    # **粗體** -> \textbf{...}
+    text = re.sub(r'\*\*(.*?)\*\*', r'\\textbf{\1}', text)
+    # *斜體* -> \textit{...}
+    text = re.sub(r'\*(.*?)\*', r'\\textit{\1}', text)
+    # _斜體_ -> \textit{...} (Markdown 規範中單底線通常也是斜體)
+    text = re.sub(r'_(.*?)_', r'\\textit{\1}', text)
+
+    # --- 4. 還原保護區域 ---
+    for i, val in enumerate(placeholders):
+        text = text.replace(f"%%PLACEHOLDER_{i}%%", val)
+
+    return text
 
 def latex_symbol_to_png(
     macro,
@@ -170,6 +217,7 @@ def create_img(macro: str, save_dir: str, thread=None) -> str:
     return fp
 
 def compile_to_png(raw_tex_code: str, thread=None) -> str:
+    # raw_tex_code = md_to_latex(raw_tex_code)
     fp = create_img(raw_tex_code, Config.WORKING_DIR, thread=thread)
     return fp
 
