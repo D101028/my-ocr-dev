@@ -9,7 +9,7 @@ from PIL import ImageGrab
 from config import Config, MODEL
 from src.api import ocr
 from src.sound import play_sound 
-from client.src.katex import compile_to_html
+from src.katex import compile_to_html
 
 # 截圖 widget
 class SnippingTool(QWidget):
