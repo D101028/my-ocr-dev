@@ -1,6 +1,7 @@
 import argparse
 import os
 import shutil
+import subprocess
 import yaml
 from typing import Literal
 
@@ -14,6 +15,18 @@ parser = argparse.ArgumentParser(description="A desktop ocr client.")
 parser.add_argument("-m", "--model", type=str, default="ocr", choices=["ocr", "latex"], help="choose the mode (model) to use")
 args = parser.parse_args()
 MODEL: Literal["ocr", "latex"] = args.model
+
+def install_katex_env(cwd: str):
+    p = subprocess.Popen(
+        ["npm", "install", "katex", "jsdom"], 
+        cwd=cwd, 
+        stdout=subprocess.PIPE, 
+        stderr=subprocess.PIPE, 
+        text=True, 
+        shell=True
+    )
+    p.wait()
+    return p.returncode, p.stdout, p.stderr
 
 class Config:
     TMP_SAVING_PATH = config.get("TMP_SAVING_PATH")
@@ -39,6 +52,14 @@ class Config:
     LATEX_OCR_SERVER_API = config.get("LATEX_OCR_SERVER_API")
     if LATEX_OCR_SERVER_API is None:
         LATEX_OCR_SERVER_API = "http://localhost:5000/texify"
+    KATEX_WORKING_DIR = config.get("KATEX_WORKING_DIR")
+    if KATEX_WORKING_DIR is None:
+        KATEX_WORKING_DIR = "./.katex-env"
+    if not os.path.isdir(KATEX_WORKING_DIR):
+        os.mkdir(KATEX_WORKING_DIR)
+        returncode, stdout, stderr = install_katex_env(KATEX_WORKING_DIR)
+        if returncode:
+            raise Exception(f"Unable to install katex: \n{stdout}\n\n{stderr}")
 
     @classmethod
     def delete_tmp_files(cls):

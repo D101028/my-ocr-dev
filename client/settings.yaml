@@ -12,5 +12,7 @@ GTTS_DEFAULT_LANG: null
 
 # LaTeX OCR server config
 # LATEX_OCR_SERVER_API: the host of latex ocr server (default: http://localhost:5000/texify)
+# KATEX_WORKING_DIR: the directory that katex will installed at (default: ./.katex-env)
 LATEX_OCR_SERVER_API: http://172.27.110.35:11451/texify
+KATEX_WORKING_DIR: null
 
