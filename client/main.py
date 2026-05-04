@@ -30,7 +30,6 @@ def main():
             if hasattr(win, 'worker') and win.worker.isRunning():
                 win.worker.kill()
                 win.worker.wait()
-                # win.worker.wait(1000) # 給予 1 秒寬限期讓它噴異常退出
         
         print("Cleaning up temporary files...")
         Config.delete_tmp_files()

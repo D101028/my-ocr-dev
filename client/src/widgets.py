@@ -149,13 +149,12 @@ class OCRWorker(QThread):
 
     def kill(self):
         """外部調用此方法來快速終止"""
+        self._is_killed = True
         if not self.isRunning():
             return 
-        self._is_killed = True
-        # 關鍵：關閉 Session 會讓阻塞中的 requests.post 立即噴出異常
+        # 關閉 Session
         self.session.close() 
         self.quit() # 停止 QThread 事件循環
-        self.wait() # 等待終止
 
 class ResultWindow(QWidget):
     def __init__(self, img_path):
@@ -367,9 +366,3 @@ class ResultWindow(QWidget):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Escape:
             self.close()
-
-    # def closeEvent(self, event):
-    #     event.accept()
-    #     if hasattr(self, 'worker') and self.worker.isRunning():
-    #         self.worker.requestInterruption()
-    #         self.worker.wait()
