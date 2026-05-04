@@ -1,3 +1,4 @@
+import requests
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QPushButton, QPlainTextEdit, QScrollArea, 
                              QApplication, QFrame, QStackedWidget, QComboBox)
@@ -108,27 +109,53 @@ class OCRWorker(QThread):
     def __init__(self, img_path):
         super().__init__()
         self.img_path = img_path
+        self._is_killed = False
+        self.session = requests.Session()
 
     def run(self):
         try:
-            if MODEL == "latex":
-                api = Config.LATEX_OCR_SERVER_API
-            else:
-                api = Config.OCR_SERVER_API
+            # 1. 檢查是否已被取消
+            if self._is_killed: return
+
+            api = Config.LATEX_OCR_SERVER_API if MODEL == "latex" else Config.OCR_SERVER_API
             
-            text = ocr(self.img_path, api)
+            # 2. 執行 OCR，傳入 session
+            text = ocr(self.img_path, api, session=self.session)
+            
+            # 3. 再次檢查（請求可能剛好在 kill 時完成）
+            if self._is_killed: return
+            
             self.ocr_finished.emit(text)
             
+            # 4. 處理 LaTeX 編譯邏輯
             if MODEL == "latex" and text.strip():
                 try:
-                    # res_img_path = compile_to_png(text, thread=self)
-                    # self.compile_finished.emit(res_img_path)
+                    # 假設 compile_to_html 內部不涉及耗時網絡，若有，也需比照辦理
                     raw_html = compile_to_html(text, thread=self)
-                    self.compile_finished.emit(raw_html)
+                    if not self._is_killed:
+                        self.compile_finished.emit(raw_html)
                 except Exception as e:
-                    self.compile_error_occurred.emit(str(e))
+                    if not self._is_killed:
+                        self.compile_error_occurred.emit(str(e))
+                        
         except Exception as e:
-            self.error_occurred.emit(str(e))
+            # 如果是因為 kill 導致的請求中斷，不發送錯誤信號
+            if self._is_killed:
+                print("Worker has been killed, ignoring exception.")
+            else:
+                self.error_occurred.emit(str(e))
+        finally:
+            self.session.close()
+
+    def kill(self):
+        """外部調用此方法來快速終止"""
+        if not self.isRunning():
+            return 
+        self._is_killed = True
+        # 關鍵：關閉 Session 會讓阻塞中的 requests.post 立即噴出異常
+        self.session.close() 
+        self.quit() # 停止 QThread 事件循環
+        self.wait() # 等待終止
 
 class ResultWindow(QWidget):
     def __init__(self, img_path):
@@ -341,8 +368,8 @@ class ResultWindow(QWidget):
         if event.key() == Qt.Key.Key_Escape:
             self.close()
 
-    def closeEvent(self, event):
-        event.accept()
-        if hasattr(self, 'worker') and self.worker.isRunning():
-            self.worker.requestInterruption()
-            self.worker.wait()
+    # def closeEvent(self, event):
+    #     event.accept()
+    #     if hasattr(self, 'worker') and self.worker.isRunning():
+    #         self.worker.requestInterruption()
+    #         self.worker.wait()

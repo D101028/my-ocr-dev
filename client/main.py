@@ -5,30 +5,34 @@ from config import Config
 from src.widgets import SnippingTool, ResultWindow
 
 def main():
+    app = QApplication(sys.argv)
+    snipper = SnippingTool()
+    windows: list[ResultWindow] = [] # 存放 ResultWindow 引用
+
+    def handle_snip_finished(img_path):
+        res_win = ResultWindow(img_path)
+        windows.append(res_win)
+        res_win.show()
+
     try:
-        app = QApplication(sys.argv)
-
-        # 1. 初始化截圖工具
-        snipper = SnippingTool()
-        
-        # 用來存放 ResultWindow 的變數（防止被垃圾回收）
-        # 使用 list 或一個全域/類別變數來保存引用
-        windows = []
-
-        def handle_snip_finished(img_path):
-            """當截圖完成時觸發的邏輯"""
-            # 2. 建立結果視窗，並傳入路徑
-            res_win = ResultWindow(img_path)
-            windows.append(res_win) # 保持引用，防止視窗閃退
-            res_win.show()
-
         snipper.img_captured.connect(handle_snip_finished)
-
         snipper.show()
 
+        # 進入事件循環，直到所有視窗關閉
         exit_code = app.exec()
-    
-    finally:    
+            
+    finally:
+        # --- 清理階段 ---
+        print("Shutting down workers...")
+        
+        # 遍歷所有視窗，關閉裡面可能正在運行的 Worker
+        for win in windows:
+            if hasattr(win, 'worker') and win.worker.isRunning():
+                win.worker.kill()
+                win.worker.wait()
+                # win.worker.wait(1000) # 給予 1 秒寬限期讓它噴異常退出
+        
+        print("Cleaning up temporary files...")
         Config.delete_tmp_files()
         sys.exit(exit_code)
 
