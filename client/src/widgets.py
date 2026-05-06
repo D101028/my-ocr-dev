@@ -1,8 +1,8 @@
 import requests
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                             QPushButton, QPlainTextEdit, QScrollArea, 
+                             QPushButton, QPlainTextEdit, 
                              QApplication, QFrame, QStackedWidget, QComboBox)
-from PyQt6.QtCore import Qt, QRect, QPoint , QThread, pyqtSignal, QTimer, QSize, QUrl
+from PyQt6.QtCore import Qt, QRect, QPoint , QThread, pyqtSignal, QTimer, QSize
 from PyQt6.QtGui import QFont, QPainter, QColor, QPen, QMovie
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEngineSettings
