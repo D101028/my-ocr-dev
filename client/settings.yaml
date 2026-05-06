@@ -7,12 +7,10 @@ TMP_SAVING_PATH: null
 # OCR_SERVER_API: the host of ocr server (default: http://localhost:5000/ocr)
 # GTTS_DEFAULT_LANG: the lang that are selected in default (default: ja); 
 # here are the available lang list: ['ja', 'en', 'ch-TW', 'ch-CN']
-OCR_SERVER_API: http://172.27.110.35:11451/ocr
+OCR_SERVER_API: null
 GTTS_DEFAULT_LANG: null
 
 # LaTeX OCR server config
 # LATEX_OCR_SERVER_API: the host of latex ocr server (default: http://localhost:5000/texify)
-# KATEX_WORKING_DIR: the directory that katex will installed at (default: ./.katex-env)
-LATEX_OCR_SERVER_API: http://172.27.110.35:11451/texify
-KATEX_WORKING_DIR: null
+LATEX_OCR_SERVER_API: null
 

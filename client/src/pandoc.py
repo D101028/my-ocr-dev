@@ -9,15 +9,21 @@ def md_to_html(raw_md: str) -> str:
     p = Popen(
         ["pandoc", "in.md", "-s", "--mathjax"], 
         cwd=Config.WORKING_DIR, 
-        stdin=PIPE, 
         stdout=PIPE, 
+        stderr=PIPE, 
         shell=True, 
         creationflags=CREATE_NO_WINDOW
     )
     stdout, stderr = p.communicate()
 
     if p.returncode:
-        raise Exception(f"Pandoc Convert Error: stdout:\n{stdout.decode()}\n\nstderr:\n{stderr.decode()}")
+        try:
+            stdout = stdout.decode()
+            stderr = stderr.decode()
+        except:
+            stdout = str(stdout)
+            stderr = str(stderr)
+        raise Exception(f"Pandoc Convert Error: stdout:\n{stdout}\n\nstderr:\n{stderr}")
     
     return stdout.decode()
 
