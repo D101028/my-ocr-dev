@@ -13,8 +13,8 @@ args = parser.parse_args()
 MODEL: Literal["ocr", "latex"] = args.model if args.model == "ocr" else "latex"
 
 CONFIG_YAML = args.config
-if not os.path.isfile("settings.yaml"):
-    raise Exception("settings.yaml not found")
+if not os.path.isfile(CONFIG_YAML):
+    raise Exception(f"{CONFIG_YAML} not found")
 with open(CONFIG_YAML, mode = "r", encoding="utf-8") as fp:
     config = yaml.load(fp, Loader=yaml.FullLoader)
 
