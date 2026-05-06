@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
 from PyQt6.QtCore import Qt, QRect, QPoint , QThread, pyqtSignal, QTimer, QSize, QUrl
 from PyQt6.QtGui import QFont, QPainter, QColor, QPen, QMovie
 from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtWebEngineCore import QWebEngineSettings
 from PIL import ImageGrab
 
 from config import Config, MODEL
@@ -292,6 +293,10 @@ class ResultWindow(QWidget):
 </html>
 """
         self.browser_area.setHtml(loading_html)
+        settings = self.browser_area.settings()
+        # Set the fixed font size (for <pre> or <code> tags)
+        if settings:
+            settings.setFontSize(QWebEngineSettings.FontSize.DefaultFontSize, 20)
         self.browser_container.addWidget(self.browser_area)
         
         parent_layout.addWidget(self.browser_container, 1)
