@@ -24,6 +24,7 @@ def md_to_html(raw_md_tex: str, thread=None) -> str:
 
     while p.is_alive():
         if thread and thread.isInterruptionRequested():
+            print("Terminating md to html worker...")
             p.terminate()
             p.join()
             raise Exception("Compilation interrupted")
@@ -98,8 +99,7 @@ fs.writeFile('{{OUTPUT_FILENAME}}', staticHtml, (err) => {
   if (err) throw err;
   console.log('File saved!');
 });
-"""
-        script = script.replace('{{HTML_BODY}}', html_body.replace('\\', '\\\\')).replace('{{OUTPUT_FILENAME}}', output_filename)
+""".replace('{{HTML_BODY}}', html_body.replace('\\', '\\\\')).replace('{{OUTPUT_FILENAME}}', output_filename)
         
         with open(script_path, mode="w", encoding="utf8") as fp:
             fp.write(script)
@@ -136,18 +136,13 @@ def compile_by_katex(html_body: str, thread=None) -> str:
     p = Process(target=compile_by_katex_worker, args=(q, html_body))
     p.start()
 
-    # count = 0
     while p.is_alive():
         if thread and thread.isInterruptionRequested():
+            print("Terminating katex compilation worker...")
             p.terminate()
             p.join()
             raise Exception("Compilation interrupted")
         time.sleep(0.1)
-        # count += 1
-        # if count >= 50:
-        #     p.terminate()
-        #     p.join()
-        #     raise Exception("Timeout")
     
     if not q.empty():
         status, value = q.get()

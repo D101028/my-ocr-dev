@@ -1,6 +1,7 @@
 temp_*
 client/out/
 client/.katex-env/
+client/.mathjax-env/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

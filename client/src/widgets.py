@@ -2,7 +2,7 @@ import requests
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QPushButton, QPlainTextEdit, QScrollArea, 
                              QApplication, QFrame, QStackedWidget, QComboBox)
-from PyQt6.QtCore import Qt, QRect, QPoint , QThread, pyqtSignal, QTimer, QSize
+from PyQt6.QtCore import Qt, QRect, QPoint , QThread, pyqtSignal, QTimer, QSize, QUrl
 from PyQt6.QtGui import QFont, QPainter, QColor, QPen, QMovie
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PIL import ImageGrab
@@ -10,7 +10,8 @@ from PIL import ImageGrab
 from config import Config, MODEL
 from src.api import ocr
 from src.sound import play_sound 
-from src.katex import compile_to_html
+# from src.katex import compile_to_html
+from src.pandoc import md_to_html
 
 # 截圖 widget
 class SnippingTool(QWidget):
@@ -130,8 +131,7 @@ class OCRWorker(QThread):
             # 4. 處理 LaTeX 編譯邏輯
             if MODEL == "latex" and text.strip():
                 try:
-                    # 假設 compile_to_html 內部不涉及耗時網絡，若有，也需比照辦理
-                    raw_html = compile_to_html(text, thread=self)
+                    raw_html = md_to_html(text)
                     if not self._is_killed:
                         self.compile_finished.emit(raw_html)
                 except Exception as e:
@@ -153,7 +153,8 @@ class OCRWorker(QThread):
         if not self.isRunning():
             return 
         # 關閉 Session
-        self.session.close() 
+        self.session.close()
+        self.requestInterruption() # 告知 latex compiler 終止退出
         self.quit() # 停止 QThread 事件循環
 
 class ResultWindow(QWidget):
@@ -249,28 +250,78 @@ class ResultWindow(QWidget):
 
     def init_latex_bottom(self, parent_layout):
         """Latex 模式：圖片編譯預覽"""
-        # 1. 使用 QStackedWidget 來管理「載入中」與「顯示結果」兩個畫面
-        self.stack = QStackedWidget()
+        # # 1. 使用 QStackedWidget 來管理「載入中」與「顯示結果」兩個畫面
+        # self.stack = QStackedWidget()
         
-        # --- 第一層：Loading 畫面 ---
-        self.loading_container = QFrame()
-        loading_layout = QVBoxLayout(self.loading_container)
-        self.display_label = QLabel()
-        self.display_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        loading_layout.addWidget(self.display_label)
+        # # --- 第一層：Loading 畫面 ---
+        # self.loading_container = QFrame()
+        # loading_layout = QVBoxLayout(self.loading_container)
+        # self.display_label = QLabel()
+        # self.display_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # loading_layout.addWidget(self.display_label)
         
-        self.loading_movie_img = QMovie(Config.LOADING_GIF)
-        self.loading_movie_img.setScaledSize(QSize(80, 80))
+        # self.loading_movie_img = QMovie(Config.LOADING_GIF)
+        # self.loading_movie_img.setScaledSize(QSize(80, 80))
         
-        # --- 第二層：瀏覽器畫面 ---
-        self.browser_area = QWebEngineView()
-        # self.browser_area.page().setBackgroundColor(Qt.GlobalColor.transparent) # type: ignore
+        # # --- 第二層：瀏覽器畫面 ---
+        # self.browser_area = QWebEngineView()
+        # # self.browser_area.page().setBackgroundColor(Qt.GlobalColor.transparent) # type: ignore
 
-        # 將兩層放入 Stack
-        self.stack.addWidget(self.loading_container) # index 0
-        self.stack.addWidget(self.browser_area)      # index 1
+        # # 將兩層放入 Stack
+        # self.stack.addWidget(self.loading_container) # index 0
+        # self.stack.addWidget(self.browser_area)      # index 1
         
-        parent_layout.addWidget(self.stack, 2)
+        # parent_layout.addWidget(self.stack, 2)
+
+        # Create Browser
+        self.browser_container = QStackedWidget()
+        self.browser_area = QWebEngineView()
+        # # self.browser_area.page().setBackgroundColor(Qt.GlobalColor.transparent) # type: ignore
+        # gif_url = QUrl.fromLocalFile(Config.LOADING_GIF).toString()
+        html_content = """
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  /* The container for the loader */
+  .loader-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80vh;
+  }
+
+  /* The actual animated ring */
+  .loader {
+    border: 8px solid #f3f3f3; /* Light grey background ring */
+    border-top: 8px solid #3498db; /* Blue spinning part */
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+  }
+
+  /* Defining the rotation */
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="loader-container">
+  <div class="loader"></div>
+</div>
+
+</body>
+</html>
+"""
+        self.browser_area.setHtml(html_content)
+        
+        self.browser_container.addWidget(self.browser_area)
+        
+        parent_layout.addWidget(self.browser_container, 1)
 
     def apply_styles(self):
         self.setStyleSheet("""
@@ -306,9 +357,9 @@ class ResultWindow(QWidget):
         self.text_loading_label.setMovie(self.loading_movie_text)
         self.loading_movie_text.start()
 
-        if MODEL == "latex":
-            self.display_label.setMovie(self.loading_movie_img)
-            self.loading_movie_img.start()
+        # if MODEL == "latex":
+        #     self.display_label.setMovie(self.loading_movie_img)
+        #     self.loading_movie_img.start()
         
         self.worker = OCRWorker(self.img_path)
         self.worker.ocr_finished.connect(self.on_ocr_success)
@@ -325,13 +376,15 @@ class ResultWindow(QWidget):
 
     def on_compile_success(self, raw_html: str):
         if MODEL == "latex":
-            # 1. 停止動畫
-            self.loading_movie_img.stop()
-            self.display_label.setMovie(None)
+            # # 1. 停止動畫
+            # self.loading_movie_img.stop()
+            # self.display_label.setMovie(None)
 
-            # 2. 更新內容並切換頁面
+            # # 2. 更新內容並切換頁面
+            # self.browser_area.setHtml(raw_html)
+            # self.stack.setCurrentWidget(self.browser_area)
+
             self.browser_area.setHtml(raw_html)
-            self.stack.setCurrentWidget(self.browser_area)
 
     def play_audio(self):
         text = self.text_edit.toPlainText().strip()
@@ -346,13 +399,13 @@ class ResultWindow(QWidget):
 
     def on_error(self, err):
         self.loading_movie_text.stop()
-        if MODEL == "latex": self.loading_movie_img.stop()
+        # if MODEL == "latex": self.loading_movie_img.stop()
         self.text_stack.setCurrentIndex(1)
         self.text_edit.setPlainText(f"⚠ Error: {err}")
     
     def on_error_compile(self, err):
         self.loading_movie_text.stop()
-        if MODEL == "latex": self.loading_movie_img.stop()
+        # if MODEL == "latex": self.loading_movie_img.stop()
         self.browser_area.setHtml(err)
 
     def copy_to_clipboard(self):
