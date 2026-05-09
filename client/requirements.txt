@@ -4,7 +4,6 @@ click==8.1.8
 colorama==0.4.6
 gTTS==2.5.4
 idna==3.11
-Markdown==3.10.2
 pillow==12.1.1
 playsound==1.2.2
 PyQt6==6.11.0
