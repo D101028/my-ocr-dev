@@ -4,10 +4,11 @@ from subprocess import Popen, PIPE, CREATE_NO_WINDOW
 from config import Config
 
 def md_to_html(raw_md: str) -> str:
-    with open(os.path.join(Config.WORKING_DIR, "in.md"), mode="w", encoding="utf8") as fp:
+    md_path = f"{os.urandom(6).hex()}.md"
+    with open(os.path.join(Config.WORKING_DIR, md_path), mode="w", encoding="utf8") as fp:
         fp.write(raw_md)
     p = Popen(
-        ["pandoc", "in.md", "-s", "--mathjax"], 
+        ["pandoc", md_path, "-s", "--mathjax"], 
         cwd=Config.WORKING_DIR, 
         stdout=PIPE, 
         stderr=PIPE, 
