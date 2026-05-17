@@ -5,7 +5,6 @@ import yaml
 from typing import Literal
 
 parser = argparse.ArgumentParser(description="A desktop ocr client.")
-# parser.add_argument("-h", "--help", action="help", help="show this help message and exit")
 parser.add_argument("-c", "--config", type=str, default="settings.yaml", help="select the specific config file")
 parser.add_argument("-m", "--model", type=str, default="ocr", choices=["ocr", "latex"], help="choose the mode (model) to use")
 args = parser.parse_args()
@@ -44,4 +43,5 @@ class Config:
 
     @classmethod
     def delete_tmp_files(cls):
-        shutil.rmtree(cls.WORKING_DIR)
+        if os.path.isdir(cls.WORKING_DIR):
+            shutil.rmtree(cls.WORKING_DIR)
