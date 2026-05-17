@@ -352,6 +352,21 @@ class ResultWindow(QWidget):
         if MODEL == "latex":
             self.browser_area.setHtml(raw_html)
 
+            # Auto update browser content
+            q = [self.text_edit.toPlainText()]
+            def update_browser_area():
+                current_index = self.text_stack.currentIndex()
+                if current_index != 1:
+                    return 
+                text_content = self.text_edit.toPlainText()
+                if q[0] == text_content:
+                    return 
+                html = md_to_html(text_content)
+                self.browser_area.setHtml(html)
+                q[0] = text_content
+
+            self.text_edit.textChanged.connect(update_browser_area)
+
     def play_audio(self):
         text = self.text_edit.toPlainText().strip()
         if not text: return
