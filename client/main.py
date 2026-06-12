@@ -1,8 +1,15 @@
+import signal
 import sys
 from PyQt6.QtWidgets import QApplication
 
 from config import Config
 from src.widgets import SnippingTool, ResultWindow
+
+def handle_ctrl_c(sig, frame):
+    print("\n[Ctrl+C] KeyboardInterrupt, quiting Qt process...")
+    QApplication.quit()
+
+signal.signal(signal.SIGINT, handle_ctrl_c)
 
 def main():
     app = QApplication(sys.argv)
