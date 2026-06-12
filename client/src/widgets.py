@@ -2,7 +2,7 @@ import requests
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QPushButton, QPlainTextEdit, 
                              QApplication, QFrame, QStackedWidget, QComboBox)
-from PyQt6.QtCore import Qt, QRect, QPoint , QThread, pyqtSignal, QTimer, QSize
+from PyQt6.QtCore import Qt, QRect, QPoint , QThread, pyqtSignal, QTimer, QSize, QEvent
 from PyQt6.QtGui import QFont, QPainter, QColor, QPen, QMovie
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEngineSettings
@@ -166,6 +166,11 @@ class ResultWindow(QWidget):
         self.init_ui()
         self.apply_styles()
         self.start_processing()
+
+        # 按鍵捕捉
+        _app_inst = QApplication.instance()
+        if _app_inst is not None:
+            _app_inst.installEventFilter(self)
 
     def init_ui(self):
         layout = QVBoxLayout(self)
@@ -399,3 +404,28 @@ class ResultWindow(QWidget):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Escape:
             self.close()
+
+    # 實作 eventFilter 函數來捕捉事件
+    def eventFilter(self, obj, event):
+        # 檢查事件是否為「按下 Esc」
+        if event.type() == QEvent.Type.KeyPress:
+            # 傳遞 event
+            self.keyPressEvent(event)
+
+            # 取得按下的鍵值
+            key = event.key()
+            
+            # 將 KeyCode 轉換為人類可讀的字串
+            # key_text = QKeySequence(key).toString()
+            
+            # TODO: 在這裡編寫你想要主程式觸發的邏輯
+            # self.label.setText(f"主程式捕捉到按鍵: {key_text}")
+            print(f"主程式捕捉到按鍵代碼: {key}")
+            
+            # 如果希望網頁本身「不會」收到這個按鍵（攔截按鍵），請回傳 True
+            # 如果希望主程式處理完後，按鍵照常輸入進網頁裡，請回傳 False
+            # return False
+            return True
+        
+        # 其他事件交給父類別處理
+        return super().eventFilter(obj, event)
