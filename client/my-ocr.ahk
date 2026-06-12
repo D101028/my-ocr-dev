@@ -1,9 +1,11 @@
+PYTHONW_PATH := "your/path/to/pythonw.exe"
+
 #!c:: ; Win + Alt + C
-SetWorkingDir, D:\Projects\my-ocr-dev\client
-Run, "D:\Projects\my-ocr-dev\client\.venv\Scripts\pythonw.exe" main.py --config test.yaml --model ocr, , Hide
+    SetWorkingDir, D:\Projects\Python\my-ocr-dev\client
+    Run, PYTHONW_PATH main.py -c test.yaml --model ocr, , Hide
 return
 
 #!x:: ; Win + Alt + X
-SetWorkingDir, D:\Projects\my-ocr-dev\client
-Run, "D:\Projects\my-ocr-dev\client\.venv\Scripts\pythonw.exe" main.py --config test.yaml --model latex, , Hide
+    SetWorkingDir, D:\Projects\Python\my-ocr-dev\client
+    Run, PYTHONW_PATH main.py -c test.yaml --model latex, , Hide
 return
