@@ -1,6 +1,7 @@
 temp_*
 client/out/
 client/test.yaml
+client/my-ocr.ahk
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
