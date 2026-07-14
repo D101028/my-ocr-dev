@@ -71,7 +71,7 @@ if os.path.exists(config_file):
             end_idx = -1
             lines = content[start_idx:].split('\n')
             for i, line in enumerate(lines[1:], 1):
-                if not line.startswith('    '):
+                if line.startswith('PretrainedConfig'):
                     end_idx = start_idx + sum(len(l) + 1 for l in lines[:i])
                     break
             if end_idx == -1:
