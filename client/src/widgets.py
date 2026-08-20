@@ -418,8 +418,7 @@ class ResultWindow(QWidget):
             # 將 KeyCode 轉換為人類可讀的字串
             # key_text = QKeySequence(key).toString()
             
-            # TODO: 在這裡編寫你想要主程式觸發的邏輯
-            # self.label.setText(f"主程式捕捉到按鍵: {key_text}")
+            # 主程式觸發的邏輯
             print(f"主程式捕捉到按鍵代碼: {key}")
             
             # 如果希望網頁本身「不會」收到這個按鍵（攔截按鍵），請回傳 True
