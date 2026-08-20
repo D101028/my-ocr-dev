@@ -424,8 +424,8 @@ class ResultWindow(QWidget):
             
             # 如果希望網頁本身「不會」收到這個按鍵（攔截按鍵），請回傳 True
             # 如果希望主程式處理完後，按鍵照常輸入進網頁裡，請回傳 False
-            # return False
-            return True
+            return False
+            # return True
         
         # 其他事件交給父類別處理
         return super().eventFilter(obj, event)
